@@ -14,10 +14,13 @@ spec:
       labels:
         app: interview1-app
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
       containers:
         - name: flask-app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          imagePipeline: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: 5000

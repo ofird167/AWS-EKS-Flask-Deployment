@@ -17,15 +17,14 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. חיבור ל-AWS באמצעות המפתחות
+      # 2. חיבור מאובטח ל-AWS באמצעות OIDC (Security Best Practice)
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      # 3. התחברות ל-AWS ECR (סעיף 31 במטלה)
+      # 3. התחברות ל-AWS ECR
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -34,7 +33,7 @@ jobs:
       - name: Build, Tag, and Push Image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: interview1-app
+          ECR_REPOSITORY: interview1-repository
           IMAGE_TAG: ${{ github.sha }}
         run: |
           cd app
@@ -42,12 +41,12 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      # 5. עדכון ה-Kubeconfig כדי ש-kubectl ו-Helm יוכלו לדבר עם ה-EKS החדש
+      # 5. עדכון ה-Kubeconfig כדי ש-kubectl ו-Helm יוכלו לדבר עם ה-EKS
       - name: Update Kubeconfig
         run: |
           aws eks update-kubeconfig --name interview1-cluster --region us-east-1
 
-      # 6. התקנת Helm בתוך ה-Runner של GitHub Actions
+      # 6. התקנת Helm בתוך ה-Runner
       - name: Set up Helm
         uses: azure/setup-helm@v4
         with:
@@ -57,9 +56,9 @@ jobs:
       - name: Deploy to EKS using Helm
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: interview1-app
+          ECR_REPOSITORY: interview1-repository
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          helm upgrade --install interview1-app ./helm-chart \
+          helm upgrade --install interview1-app ./flask-app-chart \
             --set image.repository=$ECR_REGISTRY/$ECR_REPOSITORY \
             --set image.tag=$IMAGE_TAG
