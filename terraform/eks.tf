@@ -4,6 +4,7 @@
 resource "aws_ecr_repository" "interview1_ecr" {
   name                 = "interview1-app"
   image_tag_mutability = "MUTABLE"
+  force_delete         = true
 
   image_scanning_configuration {
     scan_on_push = true
