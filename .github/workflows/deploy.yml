@@ -1,0 +1,65 @@
+name: Build and Deploy Application
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. שכפול הקוד מהמאגר
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. חיבור ל-AWS באמצעות המפתחות
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # 3. התחברות ל-AWS ECR (סעיף 31 במטלה)
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 4. בנייה ותיוג של קונטיינר ה-Flask ודחיפתו ל-ECR (סעיף 39 במטלה)
+      - name: Build, Tag, and Push Image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: interview1-app
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cd app
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      # 5. עדכון ה-Kubeconfig כדי ש-kubectl ו-Helm יוכלו לדבר עם ה-EKS החדש
+      - name: Update Kubeconfig
+        run: |
+          aws eks update-kubeconfig --name interview1-cluster --region us-east-1
+
+      # 6. התקנת Helm בתוך ה-Runner של GitHub Actions
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.12.0'
+
+      # 7. פריסת האפליקציה לקלאסטר באמצעות Helm (סעיף 40 במטלה)
+      - name: Deploy to EKS using Helm
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: interview1-app
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          helm upgrade --install interview1-app ./helm-chart \
+            --set image.repository=$ECR_REGISTRY/$ECR_REPOSITORY \
+            --set image.tag=$IMAGE_TAG

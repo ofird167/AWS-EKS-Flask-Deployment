@@ -1,0 +1,38 @@
+# Stage 1: Build & Dependencies
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+# תיקון קטן בנתיב הניקוי של apt (זה /var/lib/apt/lists/ ולא /var/list/...)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# העתקה והתקנה של הדרישות
+COPY requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+# Stage 2: Final Runtime Image (Security & Performance Aware)
+FROM python:3.11-slim AS runner
+
+WORKDIR /app
+
+# 1. יצירת משתמש Non-root כולל תיקיית בית (Security Best Practice)
+RUN useradd -u 10001 --create-home appuser
+
+# 2. העתקת החבילות עם הגדרת בעלות (chown) ישירה למניעת בעיות הרשאה
+COPY --from=builder /root/.local /home/appuser/.local
+
+# 3. העתקת קוד האפליקציה ושינוי בעלות לתיקיית העבודה
+COPY app.py .
+RUN chown -R appuser:appuser /app
+
+# מעבר למשתמש המאובטח והגדרת ה-PATH
+USER appuser
+ENV PATH=/home/appuser/.local/bin:$PATH \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]
