@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: interview1-app
+  name: AWS-EKS-Flask-Deployment-app
   labels:
-    app: interview1-app
+    app: AWS-EKS-Flask-Deployment-app
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: interview1-app
+      app: AWS-EKS-Flask-Deployment-app
   template:
     metadata:
       labels:
-        app: interview1-app
+        app: AWS-EKS-Flask-Deployment-app
     spec:
       securityContext:
         runAsNonRoot: true

@@ -6,7 +6,7 @@ app = Flask(__name__)
 def home():
     return jsonify({
         "status": "success",
-        "message": "Welcome to interview1 Flask Application deployed on AWS EKS!",
+        "message": "Welcome to AWS-EKS-Flask-Deployment Flask Application deployed on AWS EKS!",
         "version": "1.0.0"
     }), 200
 

@@ -1,5 +1,5 @@
 apiVersion: v2
-name: interview1-app
+name: AWS-EKS-Flask-Deployment-app
 description: A Helm chart for deploying the Flask application to EKS
 type: application
 version: 1.0.0

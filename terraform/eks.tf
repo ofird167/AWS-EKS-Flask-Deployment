@@ -1,8 +1,8 @@
 # ==========================================
 # 1. AWS ECR - Repository for Container Images
 # ==========================================
-resource "aws_ecr_repository" "interview1_ecr" {
-  name                 = "interview1-app"
+resource "aws_ecr_repository" "AWS-EKS-Flask-Deployment_ecr" {
+  name                 = "AWS-EKS-Flask-Deployment-app"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 
@@ -15,7 +15,7 @@ resource "aws_ecr_repository" "interview1_ecr" {
 # 2. IAM Roles for EKS Cluster
 # ==========================================
 resource "aws_iam_role" "eks_cluster_role" {
-  name = "interview1-eks-cluster-role"
+  name = "AWS-EKS-Flask-Deployment-eks-cluster-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -37,8 +37,8 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
 # ==========================================
 # 3. EKS Cluster Definition
 # ==========================================
-resource "aws_eks_cluster" "interview1_cluster" {
-  name     = "interview1-cluster"
+resource "aws_eks_cluster" "AWS-EKS-Flask-Deployment_cluster" {
+  name     = "AWS-EKS-Flask-Deployment-cluster"
   role_arn = aws_iam_role.eks_cluster_role.arn
 
   vpc_config {
@@ -57,7 +57,7 @@ resource "aws_eks_cluster" "interview1_cluster" {
 # 4. IAM Roles for EKS Node Groups
 # ==========================================
 resource "aws_iam_role" "eks_nodes_role" {
-  name = "interview1-eks-nodes-role"
+  name = "AWS-EKS-Flask-Deployment-eks-nodes-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -92,8 +92,8 @@ resource "aws_iam_role_policy_attachment" "amazon_ec2_container_registry_read_on
 
 # Node Group 1 - In Public Subnets
 resource "aws_eks_node_group" "public_nodes" {
-  cluster_name    = aws_eks_cluster.interview1_cluster.name
-  node_group_name = "interview1-public-node-group"
+  cluster_name    = aws_eks_cluster.AWS-EKS-Flask-Deployment_cluster.name
+  node_group_name = "AWS-EKS-Flask-Deployment-public-node-group"
   node_role_arn   = aws_iam_role.eks_nodes_role.arn
   subnet_ids      = [aws_subnet.public_1.id, aws_subnet.public_2.id]
   instance_types = ["t3.small", "t3.micro"]
@@ -113,8 +113,8 @@ resource "aws_eks_node_group" "public_nodes" {
 
 # Node Group 2 - In Private Subnets
 resource "aws_eks_node_group" "private_nodes" {
-  cluster_name    = aws_eks_cluster.interview1_cluster.name
-  node_group_name = "interview1-private-node-group"
+  cluster_name    = aws_eks_cluster.AWS-EKS-Flask-Deployment_cluster.name
+  node_group_name = "AWS-EKS-Flask-Deployment-private-node-group"
   node_role_arn   = aws_iam_role.eks_nodes_role.arn
   subnet_ids      = [aws_subnet.private_1.id, aws_subnet.private_2.id]
   instance_types = ["t3.small", "t3.micro"]

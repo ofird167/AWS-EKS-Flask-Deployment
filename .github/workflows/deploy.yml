@@ -33,7 +33,7 @@ jobs:
       - name: Build, Tag, and Push Image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: interview1-repository
+          ECR_REPOSITORY: AWS-EKS-Flask-Deployment-repository
           IMAGE_TAG: ${{ github.sha }}
         run: |
           cd app
@@ -44,7 +44,7 @@ jobs:
       # 5. עדכון ה-Kubeconfig כדי ש-kubectl ו-Helm יוכלו לדבר עם ה-EKS
       - name: Update Kubeconfig
         run: |
-          aws eks update-kubeconfig --name interview1-cluster --region us-east-1
+          aws eks update-kubeconfig --name AWS-EKS-Flask-Deployment-cluster --region us-east-1
 
       # 6. התקנת Helm בתוך ה-Runner
       - name: Set up Helm
@@ -56,9 +56,9 @@ jobs:
       - name: Deploy to EKS using Helm
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: interview1-repository
+          ECR_REPOSITORY: AWS-EKS-Flask-Deployment-repository
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          helm upgrade --install interview1-app ./helm-chart \
+          helm upgrade --install AWS-EKS-Flask-Deployment-app ./helm-chart \
             --set image.repository=$ECR_REGISTRY/$ECR_REPOSITORY \
             --set image.tag=$IMAGE_TAG
